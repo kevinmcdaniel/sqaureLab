@@ -1,0 +1,87 @@
+services:
+  api:
+    image: squareapi
+    build:
+      context: ../api
+      dockerfile: Dockerfile.api
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: ${DATABASE_URL}
+    env_file: 
+      - path: .env
+        required: true
+    volumes:
+      - ./api:/app/
+    networks:
+      - backend
+      - default
+    ports:
+      - ${API_PORT}:${API_PORT}
+    container_name: square.api
+    command: npm run dev
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    restart: always
+    env_file: 
+      - path: .env
+        required: true
+    environment:
+      POSTGRES_DB: ${DATABASENAME}
+      POSTGRES_USER: ${USERNAME}
+      POSTGRES_PASSWORD: ${PASSWORD}
+    networks:
+      - backend
+      - default
+    ports:
+      - "${DB_PORT}:5432"
+    container_name: square.db
+    volumes: 
+      - square_db:/var/lib/postgresql/data
+
+  # controlexpressjs:
+  #   image: controlexpressjs
+  #   build:
+  #     context: .
+  #     dockerfile: ./Dockerfile.controlexpressjs
+  #   environment:
+  #     NODE_ENV: development
+  #     DATABASE_URL: ${CONTROL_DATABASE_URL}
+  #   env_file: 
+  #     - .env
+  #   volumes:
+  #     - ./control/src:/app/src
+  #     # - ./test:/app/test
+  #     - ./.env:/app/.env
+  #     # - ./eslint.config.mjs:/app/eslint.config.mjs
+  #     # - ./jest.config.ts:/app/jest.config.ts
+  #     - ./control/package.json:/app/package.json
+  #     - ./control/package-lock.json:/app/package-lock.json
+  #     - ./control/tsconfig.json:/app/tsconfig.json
+  #     - ../enableDB/flags.flagd.json:/app/flags.flagd.json
+  #   networks:
+  #     - backend
+  #     - default
+  #   ports:
+  #     - "${CONTROL_PORT}:${CONTROL_PORT}"
+  #   container_name: 'controlexpressjs'
+  #   command: npm run start:local
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+  #     interval: "20s"
+  #     retries: 2
+  #     start_period: "5s"
+  #     timeout: "10s"
+  #   depends_on:
+  #     - db
+
+networks:
+  backend:
+    driver: bridge
+  default:
+    external: false
+
+volumes:
+  square_db:
